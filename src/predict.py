@@ -22,7 +22,8 @@ def predict_single(input_dict: dict) -> dict:
     decision = "APPROVE" if pd_score <= FINAL_CUTOFF else "REJECT"
 
     shap_values = explainer.shap_values(df_proc)
-    shap_series = pd.Series(shap_values[0], index=feature_columns)
+    sv = shap_values[1] if isinstance(shap_values, list) else shap_values
+    shap_series = pd.Series(sv[0], index=feature_columns)
     top_shap    = shap_series.abs().sort_values(ascending=False).head(5)
     top_features = [
         {"feature": feat, "shap_value": round(float(shap_series[feat]), 4)}
@@ -52,8 +53,9 @@ def predict_batch_shap(df_raw: pd.DataFrame, detail_limit: int = 100) -> dict:
     df_result["pd_score"] = np.round(pd_scores, 4)
     df_result["decision"] = decisions
 
-    shap_values  = explainer.shap_values(df_proc)                        
-    shap_matrix  = pd.DataFrame(shap_values, columns=feature_columns)
+    shap_values  = explainer.shap_values(df_proc)
+    sv           = shap_values[1] if isinstance(shap_values, list) else shap_values
+    shap_matrix  = pd.DataFrame(sv, columns=feature_columns)
     shap_summary = shap_matrix.abs().mean().sort_values(ascending=False)  
 
     subset       = shap_matrix.iloc[:detail_limit]
